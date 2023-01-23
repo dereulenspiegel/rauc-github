@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/dereulenspiegel/raucgithub/repository"
@@ -229,6 +230,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, callback Install
 			close(doneChan)
 			close(outputChan)
 		}()
+		lastPercentage := 0
 		for {
 			select {
 			case _, done := <-doneChan:
@@ -238,6 +240,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, callback Install
 			case <-ctx.Done():
 				return
 			default:
+				time.Sleep(time.Millisecond * 100)
 				percentage, _, _, err := u.rauc.GetProgress()
 				if err != nil {
 					u.logger.WithError(err).Error("failed to get progress on installation: %w", err)
@@ -245,9 +248,11 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, callback Install
 				}
 
 				// Do a non blocking write as the client might not read from the output channel
-				select {
-				case outputChan <- percentage:
-				default:
+				if percentage != int32(lastPercentage) {
+					select {
+					case outputChan <- percentage:
+					default:
+					}
 				}
 
 			}
