@@ -2,8 +2,8 @@ package dbus
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dereulenspiegel/raucgithub"
 	"github.com/godbus/dbus/v5"
@@ -21,13 +21,17 @@ const intro = `
 	</interface>` + introspect.IntrospectDataString + `</node> `
 
 type Server struct {
-	conn    *dbus.Conn
-	manager *raucgithub.UpdateManager
+	conn       *dbus.Conn
+	manager    *raucgithub.UpdateManager
+	dbusCancel context.CancelFunc
+	ctx        context.Context
 }
 
 func Start(ctx context.Context, manager *raucgithub.UpdateManager) (*Server, error) {
 	s := &Server{}
-	conn, err := dbus.ConnectSystemBus(dbus.WithContext(ctx))
+	dbusContext, dbusCancel := context.WithCancel(ctx)
+	conn, err := dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
+	s.dbusCancel = dbusCancel
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to system DBus: %w", err)
 	}
@@ -44,13 +48,31 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager) (*Server, err
 }
 
 func (s *Server) Close() error {
+	s.dbusCancel()
 	return s.conn.Close()
 }
 
 func (s *Server) NextUpdate() (map[string]string, *dbus.Error) {
-	return nil, dbus.MakeFailedError(errors.New("not implemented"))
+	update, err := s.manager.CheckForUpdate(s.ctx)
+	if err != nil {
+		return nil, dbus.MakeFailedError(err)
+	}
+
+	return map[string]string{
+		"name":        update.Name,
+		"notes":       update.Notes,
+		"version":     update.Version.String(),
+		"releaseDate": update.ReleaseDate.Format(time.RFC3339),
+	}, nil
 }
 
 func (s *Server) InstallNextUpdateAsync() *dbus.Error {
-	return dbus.MakeFailedError(errors.New("not implemented"))
+	progress := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
+		//Ignore, callback must not be empty
+	})
+	go func() {
+		// Consume the channel
+		<-progress
+	}()
+	return nil
 }

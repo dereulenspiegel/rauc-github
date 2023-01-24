@@ -5,7 +5,7 @@ go 1.19
 require github.com/sirupsen/logrus v1.9.0
 
 require (
-	github.com/coreos/go-semver v0.3.0 // indirect
+	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/go-github/v49 v49.1.0 // indirect
