@@ -25,5 +25,7 @@ jobs:
     - name: Run vet & lint
       run: |
         go vet ./...
+    - name: Check DBus permissions
+      run: cat /etc/dbus-1/system.d/*.conf
     - name: Run testing
       run: go test --tags dbus_test -v ./...
