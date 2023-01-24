@@ -1,3 +1,6 @@
+//go:build github_integration
+// +build github_integration
+
 package github
 
 import (
@@ -9,7 +12,6 @@ import (
 )
 
 func TestQueryingReleaseRealWorld(t *testing.T) {
-	t.Skipf("Just for testing things on the GitHub API, not a stable test")
 	repo, err := NewRepo("dereulenspiegel", "firmware_craftbeerpi")
 	require.NoError(t, err)
 	updates, err := repo.Updates(context.Background())
