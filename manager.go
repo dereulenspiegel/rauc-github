@@ -174,6 +174,7 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 				"updateVersion": update.Version.String(),
 				"updateName":    update.Name,
 			})
+			var compatibleBundle *repository.BundleLink
 			// Identified possible update candidate
 			for _, bundle := range update.Bundles {
 				if bundle.AssetName == "" {
@@ -181,11 +182,14 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 				}
 				bundle.Compatibility = u.extractCompatibility(bundle.AssetName)
 				if bundle.Compatibility == compatible {
+					compatibleBundle = &bundle
 					logger.WithField("bundleURL", bundle.URL).Info("identified possible next update")
-					return &update, &bundle, nil
 				}
 			}
-			logger.Info("possible update has not compatible update bundles")
+			if compatibleBundle != nil {
+				return &update, compatibleBundle, nil
+			}
+			logger.Info("possible update has no compatible update bundles")
 		}
 	}
 	return nil, nil, ErrNoSuitableUpdate
