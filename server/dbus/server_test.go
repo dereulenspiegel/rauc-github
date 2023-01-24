@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func useSessionBus() Option {
+	return func(s *Server) *Server {
+		s.useSessionBus = true
+		return s
+	}
+}
+
 func TestCreateDBusServer(t *testing.T) {
 	dbusServer, err := Start(context.Background(), nil)
 	require.NoError(t, err)
@@ -74,7 +81,7 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 		},
 	}, nil)
 
-	dbusServer, err := Start(context.Background(), updater)
+	dbusServer, err := Start(context.Background(), updater, useSessionBus())
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 

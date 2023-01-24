@@ -26,16 +26,30 @@ type Server struct {
 	manager    *raucgithub.UpdateManager
 	dbusCancel context.CancelFunc
 	ctx        context.Context
+
+	useSessionBus bool
 }
 
-func Start(ctx context.Context, manager *raucgithub.UpdateManager) (*Server, error) {
-	s := &Server{}
-	dbusContext, dbusCancel := context.WithCancel(ctx)
-	conn, err := dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
-	s.dbusCancel = dbusCancel
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to system DBus: %w", err)
+type Option func(*Server) *Server
+
+func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Option) (s *Server, err error) {
+	s = &Server{}
+	for _, opt := range opts {
+		s = opt(s)
 	}
+	dbusContext, dbusCancel := context.WithCancel(ctx)
+	s.dbusCancel = dbusCancel
+
+	var conn *dbus.Conn
+	if s.useSessionBus {
+		s.conn, err = dbus.ConnectSessionBus(dbus.WithContext(dbusContext))
+	} else {
+		s.conn, err = dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to DBus: %w", err)
+	}
+
 	s.conn = conn
 	s.manager = manager
 	if err := conn.Export(s, "/com/github/dereulenspiegel/rauc", "com.github.dereulenspiegel.rauc"); err != nil {

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from pydbus import SystemBus
-bus = SystemBus()
+from pydbus import SessionBus
+bus = SessionBus()
 
 update_manager = bus.get(
     "com.github.dereulenspiegel.rauc", # Bus name
