@@ -69,10 +69,9 @@ func TestNoUpdatesAvailable(t *testing.T) {
 		},
 	}, nil)
 
-	update, bundle, err := updater.CheckForUpdate(context.Background())
+	update, err := updater.CheckForUpdate(context.Background())
 	assert.ErrorIs(t, err, ErrNoSuitableUpdate)
 	assert.Nil(t, update)
-	assert.Nil(t, bundle)
 }
 
 func TestSuitableUpdateFound(t *testing.T) {
@@ -126,13 +125,9 @@ func TestSuitableUpdateFound(t *testing.T) {
 		},
 	}, nil)
 
-	update, bundle, err := updater.CheckForUpdate(context.Background())
+	update, err := updater.CheckForUpdate(context.Background())
 	require.NoError(t, err)
 	assert.NotNil(t, update)
-	assert.NotNil(t, bundle)
-
-	assert.Equal(t, "Penguin", update.Name)
-	assert.Equal(t, "https://example.com/update-1.8.2.bundle", bundle.URL)
 }
 
 func TestCheckUpdateWithoutAssetName(t *testing.T) {
@@ -185,14 +180,11 @@ func TestCheckUpdateWithoutAssetName(t *testing.T) {
 		},
 	}, nil)
 
-	update, bundle, err := updater.CheckForUpdate(context.Background())
+	update, err := updater.CheckForUpdate(context.Background())
 	require.NoError(t, err)
 	assert.NotNil(t, update)
-	assert.NotNil(t, bundle)
 
 	assert.Equal(t, "Penguin", update.Name)
-	assert.Equal(t, "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle", bundle.URL)
-	assert.Equal(t, "cbpifw-raspberrypi3-64_v1.8.2.bundle", bundle.AssetName)
 }
 
 func TestRunUpdate(t *testing.T) {
@@ -245,14 +237,11 @@ func TestRunUpdate(t *testing.T) {
 		},
 	}, nil)
 
-	update, bundle, err := updater.CheckForUpdate(context.Background())
+	update, err := updater.CheckForUpdate(context.Background())
 	require.NoError(t, err)
 	assert.NotNil(t, update)
-	assert.NotNil(t, bundle)
 
 	assert.Equal(t, "Penguin", update.Name)
-	assert.Equal(t, "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle", bundle.URL)
-	assert.Equal(t, "cbpifw-raspberrypi3-64_v1.8.2.bundle", bundle.AssetName)
 
 	raucClient.EXPECT().InstallBundle("https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle", mock.Anything).After(time.Millisecond * 200).Return(nil)
 

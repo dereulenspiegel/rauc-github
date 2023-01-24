@@ -149,10 +149,10 @@ func (u *UpdateManager) getOSVersionFromRauc() (string, error) {
 	return "", errors.New("failed to determine current OS version from rauc")
 }
 
-func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update, *repository.BundleLink, error) {
+func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update, error) {
 	compatible, err := u.rauc.GetCompatible()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to query compatible string from rauc: %w", err)
+		return nil, fmt.Errorf("failed to query compatible string from rauc: %w", err)
 	}
 	logger := u.logger.WithField("compatible", compatible)
 	logger.Info("Checking for update")
@@ -164,19 +164,19 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 		versionString, err = OSVersion()
 		if err != nil {
 			logger.WithError(err).Error("failed to determine OS version from /etc/os-release")
-			return nil, nil, fmt.Errorf("failed to determine current os version: %w", err)
+			return nil, fmt.Errorf("failed to determine current os version: %w", err)
 		}
 	}
 	logger = logger.WithField("currentOSVersion", versionString)
 
 	version, err := semver.NewVersion(versionString)
 	if err != nil {
-		return nil, nil,
+		return nil,
 			fmt.Errorf("current installed version (%s) is not a semver version and can't be compared to other semver versions: %w", versionString, err)
 	}
 	possibleUpdates, err := u.repo.Updates(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load possible updates from repository: %w", err)
+		return nil, fmt.Errorf("failed to load possible updates from repository: %w", err)
 	}
 	// Sort updates, so we don't always accidentally select the latest update, as this might lack necessary migrations
 	sort.SliceStable(possibleUpdates, func(i, j int) bool {
@@ -203,18 +203,18 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 			}
 			if compatibleBundle != nil {
 				u.nextUpdate = &update
-				return &update, compatibleBundle, nil
+				return &update, nil
 			}
 			logger.Info("possible update has no compatible update bundles")
 		}
 	}
-	return nil, nil, ErrNoSuitableUpdate
+	return nil, ErrNoSuitableUpdate
 
 }
 
 func (u *UpdateManager) InstallNextUpdate(ctx context.Context) (err error) {
 	if u.nextUpdate == nil {
-		u.nextUpdate, _, err = u.CheckForUpdate(ctx)
+		u.nextUpdate, err = u.CheckForUpdate(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to determine next suitable update: %w", err)
 		}
@@ -244,7 +244,7 @@ func (u *UpdateManager) InstallUpdate(ctx context.Context, update *repository.Up
 func (u *UpdateManager) InstallNextUpdateAsync(ctx context.Context, callback InstallCallback) chan int32 {
 	var err error
 	if u.nextUpdate != nil {
-		u.nextUpdate, _, err = u.CheckForUpdate(ctx)
+		u.nextUpdate, err = u.CheckForUpdate(ctx)
 		if err != nil {
 			callback(false, fmt.Errorf("failed to determine stuitable next update: %w", err))
 		}
