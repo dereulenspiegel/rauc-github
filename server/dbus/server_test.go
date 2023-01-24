@@ -13,7 +13,7 @@ import (
 	"github.com/dereulenspiegel/raucgithub"
 	"github.com/dereulenspiegel/raucgithub/mocks"
 	"github.com/dereulenspiegel/raucgithub/repository"
-	"github.com/godbus/dbus"
+	dbus "github.com/godbus/dbus/v5"
 	"github.com/holoplot/go-rauc/rauc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
