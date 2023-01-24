@@ -80,6 +80,6 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 
 	cmd := exec.Command("./testclient.py", "a-z", "A-Z")
 	stdoutStderr, err := cmd.CombinedOutput()
-	require.NoError(t, err)
 	fmt.Printf("%s\n", stdoutStderr)
+	require.NoError(t, err)
 }
