@@ -21,6 +21,7 @@ jobs:
       run: |
         go version
         go mod download
+        pip install pydbus
     - name: Run vet & lint
       run: |
         go vet ./...
