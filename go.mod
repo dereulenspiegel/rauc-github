@@ -7,7 +7,7 @@ require github.com/sirupsen/logrus v1.9.0
 require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/go-github/v49 v49.1.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/holoplot/go-rauc v0.0.0-20221004094756-c380b34e34f5 // indirect
