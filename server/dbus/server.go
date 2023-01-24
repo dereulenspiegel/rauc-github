@@ -42,9 +42,9 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Optio
 
 	var conn *dbus.Conn
 	if s.useSessionBus {
-		s.conn, err = dbus.ConnectSessionBus(dbus.WithContext(dbusContext))
+		conn, err = dbus.ConnectSessionBus(dbus.WithContext(dbusContext))
 	} else {
-		s.conn, err = dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
+		conn, err = dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to DBus: %w", err)
