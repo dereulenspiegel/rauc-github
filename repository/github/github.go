@@ -63,7 +63,7 @@ func (g *GithubRepo) Updates(ctx context.Context) (updates []repository.Update, 
 				Size:      int64(asset.GetSize()),
 				AssetName: asset.GetName(),
 			}
-			update.Bundles = append(update.Bundles, bundle)
+			update.Bundles = append(update.Bundles, &bundle)
 		}
 
 		updates = append(updates, update)

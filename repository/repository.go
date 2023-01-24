@@ -12,7 +12,7 @@ type Update struct {
 	ReleaseDate time.Time
 	Name        string
 	Notes       string
-	Bundles     []BundleLink
+	Bundles     []*BundleLink
 	Prerelease  bool
 }
 

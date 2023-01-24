@@ -99,7 +99,7 @@ func TestSuitableUpdateFound(t *testing.T) {
 		{
 			Name:    "Penguin",
 			Version: semver.New("1.8.2"),
-			Bundles: []repository.BundleLink{
+			Bundles: []*repository.BundleLink{
 				{
 					URL:       "https://example.com/update-1.8.2.bundle",
 					AssetName: "cbpifw-raspberrypi3-64_v1.8.2.bundle",
@@ -159,7 +159,7 @@ func TestCheckUpdateWithoutAssetName(t *testing.T) {
 		{
 			Name:    "Penguin",
 			Version: semver.New("1.8.2"),
-			Bundles: []repository.BundleLink{
+			Bundles: []*repository.BundleLink{
 				{
 					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle",
 				},
@@ -219,7 +219,7 @@ func TestRunUpdate(t *testing.T) {
 		{
 			Name:    "Penguin",
 			Version: semver.New("1.8.2"),
-			Bundles: []repository.BundleLink{
+			Bundles: []*repository.BundleLink{
 				{
 					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle",
 				},
@@ -261,7 +261,7 @@ func TestRunUpdate(t *testing.T) {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	updateChan := updater.InstallUpdateAsync(context.Background(), func(success bool, err error) {
+	updateChan := updater.InstallNextUpdateAsync(context.Background(), func(success bool, err error) {
 		assert.True(t, success)
 		assert.NoError(t, err)
 		wg.Done()

@@ -76,6 +76,8 @@ type UpdateManager struct {
 	repo                 repository.Repository
 	logger               logrus.FieldLogger
 	extractCompatibility func(string) string
+
+	nextUpdate *repository.Update
 }
 
 func NewUpdateManager(repo repository.Repository, options ...UpdateManagerOption) (*UpdateManager, error) {
@@ -103,6 +105,19 @@ func NewUpdateManager(repo repository.Repository, options ...UpdateManagerOption
 	}
 
 	return u, nil
+}
+
+func (u *UpdateManager) compatibleBundle(update *repository.Update) (compatBundle *repository.BundleLink, err error) {
+	compatibleString, err := u.rauc.GetCompatible()
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine compatible string from rauc: %w", err)
+	}
+	for _, bundle := range update.Bundles {
+		if bundle.Compatibility == compatibleString {
+			return bundle, nil
+		}
+	}
+	return nil, ErrNoSuitableUpdate
 }
 
 func (u *UpdateManager) getOSVersionFromRauc() (string, error) {
@@ -182,11 +197,12 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 				}
 				bundle.Compatibility = u.extractCompatibility(bundle.AssetName)
 				if bundle.Compatibility == compatible {
-					compatibleBundle = &bundle
+					compatibleBundle = bundle
 					logger.WithField("bundleURL", bundle.URL).Info("identified possible next update")
 				}
 			}
 			if compatibleBundle != nil {
+				u.nextUpdate = &update
 				return &update, compatibleBundle, nil
 			}
 			logger.Info("possible update has no compatible update bundles")
@@ -196,10 +212,20 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 
 }
 
-func (u *UpdateManager) InstallUpdate(ctx context.Context) (err error) {
-	update, bundle, err := u.CheckForUpdate(ctx)
+func (u *UpdateManager) InstallNextUpdate(ctx context.Context) (err error) {
+	if u.nextUpdate == nil {
+		u.nextUpdate, _, err = u.CheckForUpdate(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to determine next suitable update: %w", err)
+		}
+	}
+	return u.InstallUpdate(ctx, u.nextUpdate)
+}
+
+func (u *UpdateManager) InstallUpdate(ctx context.Context, update *repository.Update) (err error) {
+	bundle, err := u.compatibleBundle(update)
 	if err != nil {
-		return fmt.Errorf("failed to identify latest applicable update")
+		return fmt.Errorf("failed to identify compatible update bundle: %w", err)
 	}
 	logger := u.logger.WithFields(logrus.Fields{
 		"updateVersion": update.Version.String(),
@@ -215,11 +241,22 @@ func (u *UpdateManager) InstallUpdate(ctx context.Context) (err error) {
 	return nil
 }
 
-func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, callback InstallCallback) chan int32 {
+func (u *UpdateManager) InstallNextUpdateAsync(ctx context.Context, callback InstallCallback) chan int32 {
+	var err error
+	if u.nextUpdate != nil {
+		u.nextUpdate, _, err = u.CheckForUpdate(ctx)
+		if err != nil {
+			callback(false, fmt.Errorf("failed to determine stuitable next update: %w", err))
+		}
+	}
+	return u.InstallUpdateAsync(ctx, u.nextUpdate, callback)
+}
+
+func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *repository.Update, callback InstallCallback) chan int32 {
 	outputChan := make(chan int32, 1000)
 	doneChan := make(chan bool)
 	go func(callback InstallCallback, outputChan chan int32, doneChan chan bool) {
-		err := u.InstallUpdate(ctx)
+		err := u.InstallUpdate(ctx, update)
 		defer func() {
 			doneChan <- true
 		}()
