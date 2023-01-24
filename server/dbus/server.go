@@ -2,6 +2,7 @@ package dbus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,6 +44,15 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager) (*Server, err
 	if err := conn.Export(introspect.Introspectable(intro), "/com/github/dereulenspiegel/rauc",
 		"org.freedesktop.DBus.Introspectable"); err != nil {
 		return nil, fmt.Errorf("failed to register DBus introspection: %w", err)
+	}
+
+	reply, err := conn.RequestName("com.github.dereulenspiegel.rauc",
+		dbus.NameFlagDoNotQueue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to request name on system DBus: %w", err)
+	}
+	if reply != dbus.RequestNameReplyPrimaryOwner {
+		return nil, errors.New("name on system DBus already taken")
 	}
 	return s, nil
 }
