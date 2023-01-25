@@ -14,3 +14,14 @@ if next_update["name"] != "Penguin":
     exit(1)
 if next_update["version"] != "1.8.2":
     exit(1)
+
+update_manager.InstallNextUpdateAsync()
+status = update_manager.Status()
+if status != "installing":
+    exit(1)
+
+progress = update_manager.Progress()
+if progress != 75:
+    exit(1)
+
+exit(0)

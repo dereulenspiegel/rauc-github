@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/dereulenspiegel/raucgithub"
@@ -80,6 +81,12 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 			},
 		},
 	}, nil)
+
+	raucClient.EXPECT().InstallBundle("https://example.com/update-1.8.2.bundle", mock.Anything).
+		After(time.Millisecond * 500).Return(nil)
+
+	raucClient.EXPECT().GetProgress().Return(75, "installing", 1, nil)
+	raucClient.EXPECT().GetOperation().Maybe().Return("installing")
 
 	dbusServer, err := Start(context.Background(), updater, useSessionBus())
 	require.NoError(t, err)
