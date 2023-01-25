@@ -19,7 +19,7 @@ jobs:
         go-version: "${{ matrix.go_version }}"
     - name: Install dependencies
       run: |
-        whomai
+        echo $USER
         pwd
         go version
         go mod download
