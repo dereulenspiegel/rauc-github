@@ -19,6 +19,9 @@ const intro = `
 		</method>
 		<method name="InstallNextUpdateAsync">
 		</method>
+		<method name="Status">
+			<arg direction="out" type="s"/>
+		</method>
 	</interface>` + introspect.IntrospectDataString + `</node> `
 
 type Server struct {
@@ -99,4 +102,12 @@ func (s *Server) InstallNextUpdateAsync() *dbus.Error {
 		<-progress
 	}()
 	return nil
+}
+
+func (s *Server) Status() (string, *dbus.Error) {
+	status, err := s.manager.Status()
+	if err != nil {
+		return "", dbus.MakeFailedError(err)
+	}
+	return status.String(), nil
 }
