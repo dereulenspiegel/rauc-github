@@ -272,9 +272,6 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *reposito
 		"updateVersion": update.Version,
 	})
 	logger.Info("installing given update async")
-	if ctx == nil {
-		logger.Error("provided context is nil!")
-	}
 	go func(callback InstallCallback, logger logrus.FieldLogger, outputChan chan int32, doneChan chan bool) {
 		defer func() {
 			doneChan <- true
