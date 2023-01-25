@@ -15,7 +15,7 @@ const intro = `
 <node>
 	<interface name="com.github.dereulenspiegel.rauc">
 		<method name="NextUpdate">
-			<arg direction="out" type="{ss}"/>
+			<arg direction="out" type="a{ss}"/>
 		</method>
 		<method name="InstallNextUpdateAsync">
 		</method>
