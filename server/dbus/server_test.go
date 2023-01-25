@@ -96,4 +96,5 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
 	require.NoError(t, err)
+	time.Sleep(time.Millisecond * 500)
 }
