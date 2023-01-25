@@ -329,7 +329,7 @@ func (u *UpdateManager) Progress(ctx context.Context) (int32, error) {
 	return -1, errors.New("no operation in progress")
 }
 
-func (u *UpdateManager) Status() (Status, error) {
+func (u *UpdateManager) Status(ctx context.Context) (Status, error) {
 	operation, err := u.rauc.GetOperation()
 	if err != nil {
 		return "", fmt.Errorf("failed to query rauc status via DBus: %w", err)
