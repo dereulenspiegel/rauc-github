@@ -24,6 +24,10 @@ var (
 
 type Status string
 
+func (s Status) String() string {
+	return string(s)
+}
+
 const (
 	StatusInstalling = "installing"
 	StatusIdle       = "idle"
