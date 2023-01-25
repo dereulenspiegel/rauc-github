@@ -86,7 +86,7 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 		After(time.Millisecond * 500).Return(nil)
 
 	raucClient.EXPECT().GetProgress().Return(75, "installing", 1, nil)
-	raucClient.EXPECT().GetOperation().Maybe().Return("installing")
+	raucClient.EXPECT().GetOperation().Return("installing")
 
 	dbusServer, err := Start(context.Background(), updater, useSessionBus())
 	require.NoError(t, err)
