@@ -22,6 +22,17 @@ var (
 	ErrNoSuitableUpdate = errors.New("no suitable update found")
 )
 
+type Status string
+
+func (s Status) String() string {
+	return string(s)
+}
+
+const (
+	StatusInstalling = "installing"
+	StatusIdle       = "idle"
+)
+
 var compatibilityRegex = regexp.MustCompile(`^([a-zA-Z0-9\-\.]+)_.*`)
 
 func ExtractCompatibility(assetName string) string {
@@ -255,36 +266,47 @@ func (u *UpdateManager) InstallNextUpdateAsync(ctx context.Context, callback Ins
 func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *repository.Update, callback InstallCallback) chan int32 {
 	outputChan := make(chan int32, 1000)
 	doneChan := make(chan bool)
-	go func(callback InstallCallback, outputChan chan int32, doneChan chan bool) {
-		err := u.InstallUpdate(ctx, update)
+	logger := u.logger.WithField("operation", "install update async")
+	logger = logger.WithFields(logrus.Fields{
+		"updateName":    update.Name,
+		"updateVersion": update.Version,
+	})
+	logger.Info("installing given update async")
+	go func(callback InstallCallback, logger logrus.FieldLogger, outputChan chan int32, doneChan chan bool) {
 		defer func() {
 			doneChan <- true
 		}()
+		err := u.InstallUpdate(ctx, update)
 		if err != nil {
+			logger.WithError(err).Error("Async update failed")
 			callback(false, err)
 		} else {
+			logger.Info("Async update succeeded")
 			callback(true, nil)
 		}
-	}(callback, outputChan, doneChan)
-	go func(outputChan chan int32, doneChan chan bool) {
+	}(callback, logger, outputChan, doneChan)
+	go func(ctx context.Context, logger logrus.FieldLogger, outoutChan chan int32, doneChan chan bool) {
+
 		defer func() {
 			close(doneChan)
 			close(outputChan)
 		}()
 		lastPercentage := 0
+
 		for {
 			select {
 			case _, done := <-doneChan:
 				if done {
 					return
 				}
+
 			case <-ctx.Done():
 				return
 			default:
 				time.Sleep(time.Millisecond * 100)
 				percentage, _, _, err := u.rauc.GetProgress()
 				if err != nil {
-					u.logger.WithError(err).Error("failed to get progress on installation: %w", err)
+					logger.WithError(err).Error("failed to get progress on installation: %w", err)
 					continue
 				}
 
@@ -298,7 +320,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *reposito
 
 			}
 		}
-	}(outputChan, doneChan)
+	}(ctx, logger, outputChan, doneChan)
 
 	return outputChan
 }
@@ -316,4 +338,15 @@ func (u *UpdateManager) Progress(ctx context.Context) (int32, error) {
 		return percentage, nil
 	}
 	return -1, errors.New("no operation in progress")
+}
+
+func (u *UpdateManager) Status(ctx context.Context) (Status, error) {
+	operation, err := u.rauc.GetOperation()
+	if err != nil {
+		return "", fmt.Errorf("failed to query rauc status via DBus: %w", err)
+	}
+	if operation == "installing" {
+		return StatusInstalling, nil
+	}
+	return StatusIdle, nil
 }
