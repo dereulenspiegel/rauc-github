@@ -277,7 +277,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *reposito
 			callback(true, nil)
 		}
 	}(callback, outputChan, doneChan)
-	go func(outputChan chan int32, doneChan chan bool) {
+	go func(ctx context.Context, outoutChan chan int32, doneChan chan bool) {
 		defer func() {
 			close(doneChan)
 			close(outputChan)
@@ -309,7 +309,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *reposito
 
 			}
 		}
-	}(outputChan, doneChan)
+	}(ctx, outputChan, doneChan)
 
 	return outputChan
 }
