@@ -19,13 +19,17 @@ jobs:
         go-version: "${{ matrix.go_version }}"
     - name: Install dependencies
       run: |
+        whomai
+        pwd
         go version
         go mod download
         pip install pydbus
     - name: Run vet & lint
       run: |
         go vet ./...
-    - name: Check DBus permissions
-      run: cat /etc/dbus-1/system.d/*.conf
+    - name: Install DBus policy
+      run: sudo cp contrib/dbus-policy.conf /etc/dbus-1/system.d/com.github.dereulenspiegel.rauc.conf
+    - name: Reload DBUs to take policy effect
+      run: sudo systemctl restart dbus
     - name: Run testing
       run: go test --tags dbus_test -v ./...
