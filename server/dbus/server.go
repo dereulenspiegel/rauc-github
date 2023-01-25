@@ -58,6 +58,7 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Optio
 
 	s.conn = conn
 	s.manager = manager
+	s.ctx = ctx
 	if err := conn.Export(s, "/com/github/dereulenspiegel/rauc", "com.github.dereulenspiegel.rauc"); err != nil {
 		return nil, fmt.Errorf("failed to register DBus service: %w", err)
 	}
