@@ -22,6 +22,13 @@ var (
 	ErrNoSuitableUpdate = errors.New("no suitable update found")
 )
 
+type Status string
+
+const (
+	StatusInstalling = "installing"
+	StatusIdle       = "idle"
+)
+
 var compatibilityRegex = regexp.MustCompile(`^([a-zA-Z0-9\-\.]+)_.*`)
 
 func ExtractCompatibility(assetName string) string {
@@ -316,4 +323,15 @@ func (u *UpdateManager) Progress(ctx context.Context) (int32, error) {
 		return percentage, nil
 	}
 	return -1, errors.New("no operation in progress")
+}
+
+func (u *UpdateManager) Status() (Status, error) {
+	operation, err := u.rauc.GetOperation()
+	if err != nil {
+		return "", fmt.Errorf("failed to query rauc status via DBus: %w", err)
+	}
+	if operation == "installing" {
+		return StatusInstalling, nil
+	}
+	return StatusIdle, nil
 }
