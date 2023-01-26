@@ -19,12 +19,24 @@ func setDefaults() {
 	viper.SetDefault("dbus.enabled", true)
 }
 
+var (
+	version    string
+	commit     string
+	commitDate string
+	builtBy    = "local"
+)
+
 func main() {
 	sigchnl := make(chan os.Signal, 1)
 	signal.Notify(sigchnl, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx := context.Background()
-	logger := logrus.WithField("app", "raucgithub")
+	logger := logrus.WithFields(logrus.Fields{
+		"version":    version,
+		"commit":     commit,
+		"commitDate": commitDate,
+		"builtBy":    builtBy,
+	})
 	viper.SetConfigName("raucgithub")
 	viper.AddConfigPath("/etc")
 	viper.AddConfigPath(".")
