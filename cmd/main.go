@@ -43,6 +43,7 @@ func main() {
 	viper.SetEnvPrefix("RAUCGITHUB")
 	viper.AutomaticEnv()
 	setDefaults()
+	logger.Info("Starting raucgithub")
 
 	var contextCancels []context.CancelFunc
 	var closers []io.Closer
@@ -79,6 +80,7 @@ func main() {
 		} else {
 			closers = append(closers, dbusServer)
 		}
+		logger.Info("Started successfully, waiting...")
 	}()
 
 	<-sigchnl
