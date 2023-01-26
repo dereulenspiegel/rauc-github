@@ -1,6 +1,6 @@
 module github.com/dereulenspiegel/raucgithub
 
-go 1.19
+go 1.18
 
 require (
 	github.com/coreos/go-semver v0.3.1
