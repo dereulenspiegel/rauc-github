@@ -42,6 +42,7 @@ func main() {
 	viper.AddConfigPath(".")
 	viper.SetEnvPrefix("RAUCGITHUB")
 	viper.AutomaticEnv()
+	setDefaults()
 
 	var contextCancels []context.CancelFunc
 	var closers []io.Closer
