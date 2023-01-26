@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
+	"github.com/spf13/viper"
 )
 
 type Update struct {
@@ -26,3 +27,5 @@ type BundleLink struct {
 type Repository interface {
 	Updates(ctx context.Context) ([]Update, error)
 }
+
+func NewRepository(*viper.Viper) (Repository, error)

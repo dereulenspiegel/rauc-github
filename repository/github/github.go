@@ -9,6 +9,7 @@ import (
 	"github.com/dereulenspiegel/raucgithub/repository"
 	"github.com/google/go-github/v49/github"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type GithubRepo struct {
@@ -16,6 +17,12 @@ type GithubRepo struct {
 	owner  string
 	repo   string
 	logger logrus.FieldLogger
+}
+
+func New(conf *viper.Viper) (repository.Repository, error) {
+	owner := conf.GetString("owner")
+	repo := conf.GetString("repo")
+	return NewRepo(owner, repo)
 }
 
 func NewRepo(owner, repo string) (*GithubRepo, error) {

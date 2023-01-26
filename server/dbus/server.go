@@ -9,6 +9,7 @@ import (
 	"github.com/dereulenspiegel/raucgithub"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
+	"github.com/spf13/viper"
 )
 
 const intro = `
@@ -37,6 +38,14 @@ type Server struct {
 }
 
 type Option func(*Server) *Server
+
+func StartWithConfig(ctx context.Context, manager *raucgithub.UpdateManager, conf *viper.Viper) (*Server, error) {
+	enabled := viper.GetBool("enabled")
+	if !enabled {
+		return nil, errors.New("dbus server not enabled")
+	}
+	return Start(ctx, manager)
+}
 
 func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Option) (s *Server, err error) {
 	s = &Server{}
