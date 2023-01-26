@@ -28,4 +28,4 @@ type Repository interface {
 	Updates(ctx context.Context) ([]Update, error)
 }
 
-func NewRepository(*viper.Viper) (Repository, error)
+type NewRepository func(*viper.Viper) (Repository, error)
