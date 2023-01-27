@@ -101,7 +101,7 @@ func TestSuitableUpdateFound(t *testing.T) {
 			Bundles: []*repository.BundleLink{
 				{
 					URL:       "https://example.com/update-1.8.2.bundle",
-					AssetName: "cbpifw-raspberrypi3-64_v1.8.2.bundle",
+					AssetName: "cbpifw-raspberrypi3-64_v1.8.2_update.bin",
 				},
 			},
 		},
@@ -156,7 +156,7 @@ func TestCheckUpdateWithoutAssetName(t *testing.T) {
 			Version: semver.New("1.8.2"),
 			Bundles: []*repository.BundleLink{
 				{
-					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle",
+					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2_update.bin",
 				},
 			},
 		},
@@ -213,7 +213,7 @@ func TestRunUpdate(t *testing.T) {
 			Version: semver.New("1.8.2"),
 			Bundles: []*repository.BundleLink{
 				{
-					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle",
+					URL: "https://example.com/cbpifw-raspberrypi3-64_v1.8.2_update.bin",
 				},
 			},
 		},
@@ -243,7 +243,7 @@ func TestRunUpdate(t *testing.T) {
 
 	assert.Equal(t, "Penguin", update.Name)
 
-	raucClient.EXPECT().InstallBundle("https://example.com/cbpifw-raspberrypi3-64_v1.8.2.bundle", mock.Anything).After(time.Millisecond * 200).Return(nil)
+	raucClient.EXPECT().InstallBundle("https://example.com/cbpifw-raspberrypi3-64_v1.8.2_update.bin", mock.Anything).After(time.Millisecond * 200).Return(nil)
 
 	raucClient.EXPECT().GetProgress().Return(75, "Installing", 1, nil)
 	raucClient.EXPECT().GetOperation().Maybe().Return("installing")

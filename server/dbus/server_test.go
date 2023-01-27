@@ -57,7 +57,7 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 			Bundles: []*repository.BundleLink{
 				{
 					URL:       "https://example.com/update-1.8.2.bundle",
-					AssetName: "cbpifw-raspberrypi3-64_v1.8.2.bundle",
+					AssetName: "cbpifw-raspberrypi3-64_v1.8.2_update.bin",
 				},
 			},
 		},

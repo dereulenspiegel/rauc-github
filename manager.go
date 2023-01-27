@@ -45,6 +45,12 @@ func ExtractCompatibility(assetName string) string {
 	return ""
 }
 
+var updateBundleRegex = regexp.MustCompile(`.*_update\.bin$`)
+
+func IsArtifactUpdateBundle(assetName string) bool {
+	return updateBundleRegex.MatchString(assetName)
+}
+
 type InstallCallback func(bool, error)
 
 func OSVersion() (string, error) {
@@ -124,6 +130,9 @@ func (u *UpdateManager) compatibleBundle(update *repository.Update) (compatBundl
 		return nil, fmt.Errorf("failed to determine compatible string from rauc: %w", err)
 	}
 	for _, bundle := range update.Bundles {
+		if !IsArtifactUpdateBundle(bundle.AssetName) {
+			continue
+		}
 		if bundle.Compatibility == compatibleString {
 			return bundle, nil
 		}
@@ -207,6 +216,10 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 					_, bundle.AssetName = path.Split(bundle.URL)
 				}
 				bundle.Compatibility = u.extractCompatibility(bundle.AssetName)
+				if !IsArtifactUpdateBundle(bundle.AssetName) {
+					// This is either a fresh install image, sourcecode or something else
+					continue
+				}
 				if bundle.Compatibility == compatible {
 					compatibleBundle = bundle
 					logger.WithField("bundleURL", bundle.URL).Info("identified possible next update")
