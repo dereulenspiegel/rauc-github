@@ -29,7 +29,9 @@ func useSessionBus() Option {
 }
 
 func TestCreateDBusServer(t *testing.T) {
-	dbusServer, err := Start(context.Background(), nil)
+	// Creste simple update manager without functionality to get DBus server to startup
+	manager := &raucgithub.UpdateManager{}
+	dbusServer, err := Start(context.Background(), manager)
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 }
