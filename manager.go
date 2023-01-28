@@ -55,6 +55,8 @@ func IsArtifactUpdateBundle(assetName string) bool {
 
 type InstallCallback func(bool, error)
 
+type UpdateAvailableCallback func(*repository.Update)
+
 func OSVersion() (string, error) {
 	file, err := os.Open("/etc/os-release")
 	if err != nil {
@@ -106,7 +108,8 @@ type UpdateManager struct {
 	nextUpdate         *repository.Update
 	updateToPrerelease bool
 
-	scheduler *gocron.Scheduler
+	scheduler       *gocron.Scheduler
+	updateCallbacks []UpdateAvailableCallback
 }
 
 func UpdateToPrerelease(u *UpdateManager) *UpdateManager {
@@ -185,7 +188,9 @@ func (u *UpdateManager) checkUpdateTask() {
 		"name":       update.Name,
 		"releseDate": update.ReleaseDate,
 	}).Info("found update")
-	// TODO notify other components
+	for _, cb := range u.updateCallbacks {
+		go cb(update)
+	}
 }
 
 func (u *UpdateManager) getOSVersionFromRauc() (string, error) {
@@ -215,6 +220,10 @@ func (u *UpdateManager) getOSVersionFromRauc() (string, error) {
 		return versionString, nil
 	}
 	return "", errors.New("failed to determine current OS version from rauc")
+}
+
+func (u *UpdateManager) RegisterUpdateAvailableCallback(cb UpdateAvailableCallback) {
+	u.updateCallbacks = append(u.updateCallbacks, cb)
 }
 
 func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update, error) {
