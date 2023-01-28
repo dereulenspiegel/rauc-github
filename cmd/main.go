@@ -66,7 +66,9 @@ func main() {
 		if err != nil {
 			logger.WithError(err).Fatal("failed to create repository")
 		}
-		manager, err := raucgithub.NewUpdateManager(githubRepo)
+
+		updateManagerConfig := viper.Sub("manager")
+		manager, err := raucgithub.NewUpdateManagerFromConfig(githubRepo, updateManagerConfig)
 		if err != nil {
 			logger.WithError(err).Fatal("failed to create update manager")
 		}

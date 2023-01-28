@@ -2,3 +2,6 @@ repo:
   github:
     owner: dereulenspiegel
     repo: firmware_craftbeerpi
+
+manager:
+  allowPrerelease: false

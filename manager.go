@@ -16,6 +16,7 @@ import (
 	"github.com/dereulenspiegel/raucgithub/repository"
 	"github.com/holoplot/go-rauc/rauc"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -101,6 +102,14 @@ type UpdateManager struct {
 func UpdateToPrerelease(u *UpdateManager) *UpdateManager {
 	u.updateToPrerelease = true
 	return u
+}
+
+func NewUpdateManagerFromConfig(repo repository.Repository, conf *viper.Viper) (*UpdateManager, error) {
+	var opts []UpdateManagerOption
+	if conf.GetBool("allowPrerelease") {
+		opts = append(opts, UpdateToPrerelease)
+	}
+	return NewUpdateManager(repo, opts...)
 }
 
 func NewUpdateManager(repo repository.Repository, options ...UpdateManagerOption) (*UpdateManager, error) {
