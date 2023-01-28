@@ -94,7 +94,13 @@ type UpdateManager struct {
 	logger               logrus.FieldLogger
 	extractCompatibility func(string) string
 
-	nextUpdate *repository.Update
+	nextUpdate         *repository.Update
+	updateToPrerelease bool
+}
+
+func UpdateToPrerelease(u *UpdateManager) *UpdateManager {
+	u.updateToPrerelease = true
+	return u
 }
 
 func NewUpdateManager(repo repository.Repository, options ...UpdateManagerOption) (*UpdateManager, error) {
@@ -208,7 +214,12 @@ func (u *UpdateManager) CheckForUpdate(ctx context.Context) (*repository.Update,
 			logger = logger.WithFields(logrus.Fields{
 				"updateVersion": update.Version.String(),
 				"updateName":    update.Name,
+				"prerelease":    update.Prerelease,
 			})
+			if update.Prerelease && !u.updateToPrerelease {
+				logger.Info("Skipping prerelease")
+				continue
+			}
 			var compatibleBundle *repository.BundleLink
 			// Identified possible update candidate
 			for _, bundle := range update.Bundles {
