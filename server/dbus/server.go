@@ -87,6 +87,7 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Optio
 	}
 
 	s.manager.RegisterUpdateAvailableCallback(s.updateAvailable)
+
 	return s, nil
 }
 
