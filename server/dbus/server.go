@@ -10,6 +10,7 @@ import (
 	"github.com/dereulenspiegel/raucgithub/repository"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -27,6 +28,9 @@ const intro = `
 		<method name="Progress">
 			<arg direction="out" type="i"/>
 		</method>
+		<signal name="UpdateAvailable">
+			<arg name="update" type="a{ss}"/>
+		</signal>
 	</interface>` + introspect.IntrospectDataString + `</node> `
 
 type Server struct {
@@ -34,6 +38,7 @@ type Server struct {
 	manager    *raucgithub.UpdateManager
 	dbusCancel context.CancelFunc
 	ctx        context.Context
+	logger     logrus.FieldLogger
 
 	useSessionBus bool
 }
@@ -49,7 +54,9 @@ func StartWithConfig(ctx context.Context, manager *raucgithub.UpdateManager, con
 }
 
 func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Option) (s *Server, err error) {
-	s = &Server{}
+	s = &Server{
+		logger: logrus.WithField("component", "dbusServer"),
+	}
 	for _, opt := range opts {
 		s = opt(s)
 	}
@@ -97,7 +104,18 @@ func (s *Server) Close() error {
 }
 
 func (s *Server) updateAvailable(update *repository.Update) {
+	if err := s.conn.Emit("/com/github/dereulenspiegel/rauc", "com.github.dereulenspiegel.rauc.UpdateAvailable", mapFromUpdate(update)); err != nil {
+		s.logger.WithError(err).Error("failed to emit DBus signal on new update")
+	}
+}
 
+func mapFromUpdate(update *repository.Update) map[string]string {
+	return map[string]string{
+		"name":        update.Name,
+		"notes":       update.Notes,
+		"version":     update.Version.String(),
+		"releaseDate": update.ReleaseDate.Format(time.RFC3339),
+	}
 }
 
 func (s *Server) NextUpdate() (map[string]string, *dbus.Error) {
@@ -106,12 +124,7 @@ func (s *Server) NextUpdate() (map[string]string, *dbus.Error) {
 		return nil, dbus.MakeFailedError(err)
 	}
 
-	return map[string]string{
-		"name":        update.Name,
-		"notes":       update.Notes,
-		"version":     update.Version.String(),
-		"releaseDate": update.ReleaseDate.Format(time.RFC3339),
-	}, nil
+	return mapFromUpdate(update), nil
 }
 
 func (s *Server) InstallNextUpdateAsync() *dbus.Error {
