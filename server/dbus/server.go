@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dereulenspiegel/raucgithub"
+	"github.com/dereulenspiegel/raucgithub/repository"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/spf13/viper"
@@ -84,12 +85,18 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Optio
 	if reply != dbus.RequestNameReplyPrimaryOwner {
 		return nil, errors.New("name on system DBus already taken")
 	}
+
+	s.manager.RegisterUpdateAvailableCallback(s.updateAvailable)
 	return s, nil
 }
 
 func (s *Server) Close() error {
 	s.dbusCancel()
 	return s.conn.Close()
+}
+
+func (s *Server) updateAvailable(update *repository.Update) {
+
 }
 
 func (s *Server) NextUpdate() (map[string]string, *dbus.Error) {
