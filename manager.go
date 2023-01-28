@@ -14,6 +14,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/dereulenspiegel/raucgithub/repository"
+	"github.com/go-co-op/gocron"
 	"github.com/holoplot/go-rauc/rauc"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -89,6 +90,13 @@ func WithRaucClient(client raucDBUSClient) UpdateManagerOption {
 	}
 }
 
+func CheckForUpdatesEvery(interval time.Duration) UpdateManagerOption {
+	return func(u *UpdateManager) *UpdateManager {
+		u.scheduler.Every(interval).SingletonMode().Tag("checkUpdate").Do(u.checkUpdateTask)
+		return u
+	}
+}
+
 type UpdateManager struct {
 	rauc                 raucDBUSClient
 	repo                 repository.Repository
@@ -97,6 +105,8 @@ type UpdateManager struct {
 
 	nextUpdate         *repository.Update
 	updateToPrerelease bool
+
+	scheduler *gocron.Scheduler
 }
 
 func UpdateToPrerelease(u *UpdateManager) *UpdateManager {
@@ -109,13 +119,21 @@ func NewUpdateManagerFromConfig(repo repository.Repository, conf *viper.Viper) (
 	if conf.GetBool("allowPrerelease") {
 		opts = append(opts, UpdateToPrerelease)
 	}
+	if intervalString := conf.GetString("checkInterval"); intervalString != "" {
+		interval, err := time.ParseDuration(intervalString)
+		if err != nil {
+			panic(fmt.Errorf("invalid time duration string: %s", intervalString))
+		}
+		opts = append(opts, CheckForUpdatesEvery(interval))
+	}
 	return NewUpdateManager(repo, opts...)
 }
 
 func NewUpdateManager(repo repository.Repository, options ...UpdateManagerOption) (*UpdateManager, error) {
 
 	u := &UpdateManager{
-		repo: repo,
+		repo:      repo,
+		scheduler: gocron.NewScheduler(time.Local),
 	}
 
 	for _, opt := range options {
@@ -153,6 +171,21 @@ func (u *UpdateManager) compatibleBundle(update *repository.Update) (compatBundl
 		}
 	}
 	return nil, ErrNoSuitableUpdate
+}
+
+func (u *UpdateManager) checkUpdateTask() {
+	logger := u.logger.WithField("task", "checkUpdate")
+	update, err := u.CheckForUpdate(context.Background())
+	if err != nil && err != ErrNoSuitableUpdate {
+		logger.WithError(err).Error("failed to check for update")
+		return
+	}
+	logger.WithFields(logrus.Fields{
+		"version":    update.Version,
+		"name":       update.Name,
+		"releseDate": update.ReleaseDate,
+	}).Info("found update")
+	// TODO notify other components
 }
 
 func (u *UpdateManager) getOSVersionFromRauc() (string, error) {

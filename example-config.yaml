@@ -5,3 +5,4 @@ repo:
 
 manager:
   allowPrerelease: false
+  checkInterval: 12h
