@@ -149,6 +149,10 @@ func TestNewUpdateSignal(t *testing.T) {
 		},
 	}, nil)
 
+	dbusServer, err := Start(context.Background(), updater, useSessionBus())
+	require.NoError(t, err)
+	assert.NotNil(t, dbusServer)
+
 	cmd := exec.Command("./test_update_signal.py")
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
