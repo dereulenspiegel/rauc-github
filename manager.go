@@ -178,10 +178,13 @@ func (u *UpdateManager) compatibleBundle(update *repository.Update) (compatBundl
 
 func (u *UpdateManager) checkUpdateTask() {
 	logger := u.logger.WithField("task", "checkUpdate")
+	logger.Info("Checking for new update")
 	update, err := u.CheckForUpdate(context.Background())
 	if err != nil && err != ErrNoSuitableUpdate {
 		logger.WithError(err).Error("failed to check for update")
 		return
+	} else if err == ErrNoSuitableUpdate {
+		logger.Info("no new update found")
 	}
 	logger.WithFields(logrus.Fields{
 		"version":    update.Version,
