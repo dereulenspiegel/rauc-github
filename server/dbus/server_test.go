@@ -32,6 +32,9 @@ func TestCreateDBusServer(t *testing.T) {
 	// Creste simple update manager without functionality to get DBus server to startup
 	manager := &raucgithub.UpdateManager{}
 	dbusServer, err := Start(context.Background(), manager)
+	t.Cleanup(func() {
+		dbusServer.Close()
+	})
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 }
@@ -91,6 +94,9 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 	raucClient.EXPECT().GetOperation().Return("installing", nil)
 
 	dbusServer, err := Start(context.Background(), updater, useSessionBus())
+	t.Cleanup(func() {
+		dbusServer.Close()
+	})
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 
@@ -150,6 +156,9 @@ func TestNewUpdateSignal(t *testing.T) {
 	}, nil)
 
 	dbusServer, err := Start(context.Background(), updater, useSessionBus())
+	t.Cleanup(func() {
+		dbusServer.Close()
+	})
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 
