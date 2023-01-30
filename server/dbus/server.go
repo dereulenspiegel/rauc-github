@@ -31,6 +31,7 @@ const intro = `
 		<signal name="UpdateAvailable">
 			<arg name="update" type="a{ss}"/>
 		</signal>
+		<property name="AvailableUpdate" type="a{ss}" access="read"/>
 	</interface>` + introspect.IntrospectDataString + `</node> `
 
 type Server struct {

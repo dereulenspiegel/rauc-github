@@ -94,9 +94,63 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 
-	cmd := exec.Command("./test_run_update.py", "a-z", "A-Z")
+	cmd := exec.Command("./test_run_update.py")
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
 	require.NoError(t, err)
 	time.Sleep(time.Millisecond * 500)
+}
+
+func TestNewUpdateSignal(t *testing.T) {
+	repo := mocks.NewRepository(t)
+	raucClient := mocks.NewRaucDBUSClient(t)
+
+	currentVersion, err := semver.NewVersion("1.8.1")
+	require.NoError(t, err)
+
+	updater, err := raucgithub.NewUpdateManager(repo, raucgithub.WithRaucClient(raucClient), raucgithub.CheckForUpdatesEvery(time.Millisecond*500))
+	require.NoError(t, err)
+
+	repo.EXPECT().Updates(mock.Anything).Return([]repository.Update{
+		{
+			Version: semver.New("1.2.2"),
+		},
+		{
+			Version: semver.New("1.6.6"),
+		},
+		{
+			Name:    "Penguin",
+			Version: semver.New("1.8.2"),
+			Bundles: []*repository.BundleLink{
+				{
+					URL:       "https://example.com/update-1.8.2.bundle",
+					AssetName: "cbpifw-raspberrypi3-64_v1.8.2_update.bin",
+				},
+			},
+		},
+	}, nil)
+
+	raucClient.EXPECT().GetBootSlot().Return("slot0", nil)
+	raucClient.EXPECT().GetCompatible().Return("cbpifw-raspberrypi3-64", nil)
+	raucClient.EXPECT().GetSlotStatus().Return([]rauc.SlotStatus{
+		{
+			SlotName: "slot0",
+			Status: map[string]dbus.Variant{
+				"bundle.version": dbus.MakeVariant(currentVersion.String()),
+				"bundle.foo":     dbus.MakeVariant("bar"),
+			},
+		},
+		{
+			SlotName: "slot1",
+			Status: map[string]dbus.Variant{
+				"bundle.version": dbus.MakeVariant("1.7.0"),
+				"bundle.foo":     dbus.MakeVariant("bar"),
+			},
+		},
+	}, nil)
+
+	cmd := exec.Command("./test_update_signal.py")
+	stdoutStderr, err := cmd.CombinedOutput()
+	fmt.Printf("%s\n", stdoutStderr)
+	require.NoError(t, err)
 }
