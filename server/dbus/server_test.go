@@ -94,7 +94,7 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 
-	cmd := exec.Command("./testclient.py", "a-z", "A-Z")
+	cmd := exec.Command("./test_run_update.py", "a-z", "A-Z")
 	stdoutStderr, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", stdoutStderr)
 	require.NoError(t, err)
