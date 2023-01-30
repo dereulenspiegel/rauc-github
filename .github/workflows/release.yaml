@@ -24,6 +24,7 @@ jobs:
         go version
         go mod download
         pip install pydbus
+        pip install glib
     - name: Run vet & lint
       run: |
         go vet ./...
