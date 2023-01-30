@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 from pydbus import SessionBus
+from gi.repository import GLib
 import time
+
+loop = GLib.MainLoop()
 
 bus = SessionBus()
 
@@ -18,6 +21,7 @@ def signal_callback(signal):
     print(signal)
 
 update_manager.UpdateAvailable.connect(signal_callback)
+loop.run()
 time.sleep(1)
 
 if signal_received:
