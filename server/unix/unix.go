@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	logrusLogger "github.com/chi-middleware/logrus-logger"
 	"github.com/dereulenspiegel/raucgithub"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -40,11 +43,17 @@ func New(manager *raucgithub.UpdateManager, conf *viper.Viper) (*SocketServer, e
 }
 
 func (s *SocketServer) Start(ctx context.Context) error {
+	r := chi.NewRouter()
 	httpServer := &http.Server{
 		BaseContext: func(l net.Listener) context.Context {
 			return context.WithValue(ctx, contextKey("source"), s.socketPath)
 		},
+		Handler: r,
 	}
+	r.Use(middleware.CleanPath)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Recoverer)
+	r.Use(logrusLogger.Logger("router", s.logger))
 
 	unixListener, err := net.Listen("unix", s.socketPath)
 	if err != nil {
