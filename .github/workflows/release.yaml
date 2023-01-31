@@ -25,6 +25,7 @@ jobs:
         go mod download
         pip install pydbus
         pip install glib
+        pip install requests_unixsocket
     - name: Run vet & lint
       run: |
         go vet ./...

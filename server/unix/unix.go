@@ -33,7 +33,7 @@ type SocketServer struct {
 }
 
 func New(manager *raucgithub.UpdateManager, conf *viper.Viper) (*SocketServer, error) {
-	enabled := viper.GetBool("enabled")
+	enabled := conf.GetBool("enabled")
 	if !enabled {
 		return nil, errors.New("unix socket server disabled")
 	}
