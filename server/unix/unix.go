@@ -27,6 +27,9 @@ type SocketServer struct {
 
 	socketPath string
 	server     *http.Server
+
+	lastProgress int32
+	lastError    error
 }
 
 func New(manager *raucgithub.UpdateManager, conf *viper.Viper) (*SocketServer, error) {
@@ -61,6 +64,7 @@ func (s *SocketServer) Start(ctx context.Context) error {
 	r.Route("/update", func(r chi.Router) {
 		r.Get("/check", s.checkUpdate)
 		r.Get("/status", s.status)
+		r.Post("/", s.startUpdate)
 	})
 
 	unixListener, err := net.Listen("unix", s.socketPath)
@@ -128,9 +132,10 @@ func (s *SocketServer) checkUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 type statusResponse struct {
-	Status     string          `json:"status"`
-	Progress   *int32          `json:"progress,omitempty"`
-	NextUpdate *updateResponse `json:"nextUpdate,omitempty"`
+	Status      string          `json:"status"`
+	Progress    *int32          `json:"progress,omitempty"`
+	NextUpdate  *updateResponse `json:"nextUpdate,omitempty"`
+	UpdateError *string         `json:"updateError,omitempty"`
 }
 
 func (s *SocketServer) status(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +153,10 @@ func (s *SocketServer) status(w http.ResponseWriter, r *http.Request) {
 		}
 		resp.Progress = &progress
 	} else {
+		if s.lastError != nil {
+			lastErrMsg := s.lastError.Error()
+			resp.UpdateError = &lastErrMsg
+		}
 		update, err := s.manager.CheckForUpdate(r.Context())
 		if err == nil {
 			updateResp := responseFromUpdate(update)
@@ -158,6 +167,22 @@ func (s *SocketServer) status(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(resp, http.StatusOK, w)
+}
+
+func (s *SocketServer) startUpdate(w http.ResponseWriter, r *http.Request) {
+	s.lastError = nil
+	progressChan := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
+		if !success {
+			s.lastError = err
+		}
+	})
+	go func(in chan int32) {
+		for prog := range in {
+			// This is mostly for consuming the channel to avoid buffer issues
+			s.lastProgress = prog
+		}
+	}(progressChan)
+	s.status(w, r)
 }
 
 type errorResponse struct {
