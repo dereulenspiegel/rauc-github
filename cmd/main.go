@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,7 +11,7 @@ import (
 
 	"github.com/dereulenspiegel/raucgithub"
 	"github.com/dereulenspiegel/raucgithub/repository/github"
-	"github.com/dereulenspiegel/raucgithub/server/dbus"
+	"github.com/dereulenspiegel/raucgithub/server"
 )
 
 func setDefaults() {
@@ -46,12 +45,12 @@ func main() {
 	logger.Info("Starting raucgithub")
 
 	var contextCancels []context.CancelFunc
-	var closers []io.Closer
+	var servers []server.Server
 	defer func() {
 		for _, cancelFunc := range contextCancels {
 			cancelFunc()
 		}
-		for _, closer := range closers {
+		for _, closer := range servers {
 			closer.Close()
 		}
 	}()
@@ -73,15 +72,25 @@ func main() {
 			logger.WithError(err).Fatal("failed to create update manager")
 		}
 
-		dbusConfig := viper.Sub("dbus")
-		dbusCtx, dbusCancel := context.WithCancel(ctx)
-		contextCancels = append(contextCancels, dbusCancel)
-		dbusServer, err := dbus.StartWithConfig(dbusCtx, manager, dbusConfig)
-		if err != nil {
-			logger.WithError(err).Error("failed to start dbus server")
-		} else {
-			closers = append(closers, dbusServer)
+		serverBuilders := server.Builders()
+
+		for _, builder := range serverBuilders {
+			logger := logger.WithField("server", builder.Name())
+			logger.Info("configuring server")
+			serverConfig := viper.Sub(builder.ConfigKey())
+			serverCtx, serverCancel := context.WithCancel(ctx)
+			contextCancels = append(contextCancels, serverCancel)
+			server, err := builder.New(manager, serverConfig)
+			if err != nil {
+				logger.WithError(err).Error("failed to configure server")
+			}
+			servers = append(servers, server)
+			logger.Info("starting server")
+			if err := server.Start(serverCtx); err != nil {
+				logger.WithError(err).Error("failed to start server")
+			}
 		}
+
 		logger.Info("Started successfully, waiting...")
 	}()
 

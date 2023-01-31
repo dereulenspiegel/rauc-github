@@ -1,5 +1,4 @@
-//go:build dbus_test
-// +build dbus_test
+//go:build dbus && dbus_test
 
 package dbus
 
@@ -31,11 +30,13 @@ func useSessionBus() Option {
 func TestCreateDBusServer(t *testing.T) {
 	// Creste simple update manager without functionality to get DBus server to startup
 	manager := &raucgithub.UpdateManager{}
-	dbusServer, err := Start(context.Background(), manager)
+	dbusServer, err := New(manager)
+	require.NoError(t, err)
+	err = dbusServer.Start(context.Background())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		dbusServer.Close()
 	})
-	require.NoError(t, err)
 	assert.NotNil(t, dbusServer)
 }
 
@@ -93,12 +94,14 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 	raucClient.EXPECT().GetProgress().Return(75, "installing", 1, nil)
 	raucClient.EXPECT().GetOperation().Return("installing", nil)
 
-	dbusServer, err := Start(context.Background(), updater, useSessionBus())
+	dbusServer, err := New(updater, useSessionBus())
+	require.NoError(t, err)
+	require.NotNil(t, dbusServer)
+	err = dbusServer.Start(context.Background())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		dbusServer.Close()
 	})
-	require.NoError(t, err)
-	assert.NotNil(t, dbusServer)
 
 	cmd := exec.Command("./test_run_update.py")
 	stdoutStderr, err := cmd.CombinedOutput()
@@ -156,12 +159,14 @@ func TestNewUpdateSignal(t *testing.T) {
 		},
 	}, nil)
 
-	dbusServer, err := Start(context.Background(), updater, useSessionBus())
+	dbusServer, err := New(updater, useSessionBus())
+	require.NoError(t, err)
+	require.NotNil(t, dbusServer)
+	err = dbusServer.Start(context.Background())
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		dbusServer.Close()
 	})
-	require.NoError(t, err)
-	assert.NotNil(t, dbusServer)
 
 	cmd := exec.Command("./test_update_signal.py")
 	stdoutStderr, err := cmd.CombinedOutput()
