@@ -1,3 +1,5 @@
+//go:build dbus
+
 package dbus
 
 import (
@@ -46,21 +48,27 @@ type Server struct {
 
 type Option func(*Server) *Server
 
-func StartWithConfig(ctx context.Context, manager *raucgithub.UpdateManager, conf *viper.Viper) (*Server, error) {
+func NewWithConfig(manager *raucgithub.UpdateManager, conf *viper.Viper) (*Server, error) {
 	enabled := viper.GetBool("enabled")
 	if !enabled {
 		return nil, errors.New("dbus server not enabled")
 	}
-	return Start(ctx, manager)
+	return New(manager)
 }
 
-func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Option) (s *Server, err error) {
+func New(manager *raucgithub.UpdateManager, opts ...Option) (s *Server, err error) {
 	s = &Server{
-		logger: logrus.WithField("component", "dbusServer"),
+		logger:  logrus.WithField("component", "dbusServer"),
+		manager: manager,
 	}
 	for _, opt := range opts {
 		s = opt(s)
 	}
+
+	return s, nil
+}
+
+func (s *Server) Start(ctx context.Context) (err error) {
 	dbusContext, dbusCancel := context.WithCancel(ctx)
 	s.dbusCancel = dbusCancel
 
@@ -71,32 +79,30 @@ func Start(ctx context.Context, manager *raucgithub.UpdateManager, opts ...Optio
 		conn, err = dbus.ConnectSystemBus(dbus.WithContext(dbusContext))
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to DBus: %w", err)
+		return fmt.Errorf("failed to connect to DBus: %w", err)
 	}
 
 	s.conn = conn
-	s.manager = manager
 	s.ctx = ctx
 	if err := conn.Export(s, "/com/github/dereulenspiegel/rauc", "com.github.dereulenspiegel.rauc"); err != nil {
-		return nil, fmt.Errorf("failed to register DBus service: %w", err)
+		return fmt.Errorf("failed to register DBus service: %w", err)
 	}
 	if err := conn.Export(introspect.Introspectable(intro), "/com/github/dereulenspiegel/rauc",
 		"org.freedesktop.DBus.Introspectable"); err != nil {
-		return nil, fmt.Errorf("failed to register DBus introspection: %w", err)
+		return fmt.Errorf("failed to register DBus introspection: %w", err)
 	}
 
 	reply, err := conn.RequestName("com.github.dereulenspiegel.rauc",
 		dbus.NameFlagDoNotQueue)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request name on system DBus: %w", err)
+		return fmt.Errorf("failed to request name on system DBus: %w", err)
 	}
 	if reply != dbus.RequestNameReplyPrimaryOwner {
-		return nil, errors.New("name on system DBus already taken")
+		return errors.New("name on system DBus already taken")
 	}
 
 	s.manager.RegisterUpdateAvailableCallback(s.updateAvailable)
-
-	return s, nil
+	return nil
 }
 
 func (s *Server) Close() error {
