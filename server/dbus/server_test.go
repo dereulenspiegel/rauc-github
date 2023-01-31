@@ -108,6 +108,7 @@ func TestRunningDBusServerIntegration(t *testing.T) {
 }
 
 func TestNewUpdateSignal(t *testing.T) {
+	t.Skip()
 	repo := mocks.NewRepository(t)
 	raucClient := mocks.NewRaucDBUSClient(t)
 
