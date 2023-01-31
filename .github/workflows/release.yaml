@@ -33,7 +33,7 @@ jobs:
     - name: Reload DBUs to take policy effect
       run: sudo systemctl restart dbus
     - name: Run testing
-      run: go test --tags dbus_test -v ./...
+      run: go test -v ./...
     - uses: anchore/sbom-action/download-syft@v0.13.3 # installs syft
     - uses: goreleaser/goreleaser-action@v4
       with:
