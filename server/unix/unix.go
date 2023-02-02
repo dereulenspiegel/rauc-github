@@ -171,11 +171,14 @@ func (s *SocketServer) status(w http.ResponseWriter, r *http.Request) {
 
 func (s *SocketServer) startUpdate(w http.ResponseWriter, r *http.Request) {
 	s.lastError = nil
-	progressChan := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
+	progressChan, err := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
 		if !success {
 			s.lastError = err
 		}
 	})
+	if err != nil {
+		panic(err)
+	}
 	go func(in chan int32) {
 		for prog := range in {
 			// This is mostly for consuming the channel to avoid buffer issues

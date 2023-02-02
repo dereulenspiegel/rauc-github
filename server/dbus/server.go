@@ -135,9 +135,12 @@ func (s *Server) NextUpdate() (map[string]string, *dbus.Error) {
 }
 
 func (s *Server) InstallNextUpdateAsync() *dbus.Error {
-	progress := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
+	progress, err := s.manager.InstallNextUpdateAsync(s.ctx, func(success bool, err error) {
 		//Ignore, callback must not be empty
 	})
+	if err != nil {
+		return dbus.MakeFailedError(err)
+	}
 	go func() {
 		// Consume the channel
 		<-progress
