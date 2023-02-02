@@ -250,11 +250,12 @@ func TestRunUpdate(t *testing.T) {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	updateChan := updater.InstallNextUpdateAsync(context.Background(), func(success bool, err error) {
+	updateChan, err := updater.InstallNextUpdateAsync(context.Background(), func(success bool, err error) {
 		assert.True(t, success)
 		assert.NoError(t, err)
 		wg.Done()
 	})
+	require.NoError(t, err)
 	wg.Wait()
 	assert.GreaterOrEqual(t, len(updateChan), 1)
 }

@@ -330,18 +330,25 @@ func (u *UpdateManager) InstallUpdate(ctx context.Context, update *repository.Up
 	return nil
 }
 
-func (u *UpdateManager) InstallNextUpdateAsync(ctx context.Context, callback InstallCallback) chan int32 {
+func (u *UpdateManager) InstallNextUpdateAsync(ctx context.Context, callback InstallCallback) (chan int32, error) {
 	var err error
-	if u.nextUpdate != nil {
+	if u.nextUpdate == nil {
 		u.nextUpdate, err = u.CheckForUpdate(ctx)
 		if err != nil {
 			callback(false, fmt.Errorf("failed to determine stuitable next update: %w", err))
+			return nil, err
 		}
 	}
 	return u.InstallUpdateAsync(ctx, u.nextUpdate, callback)
 }
 
-func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *repository.Update, callback InstallCallback) chan int32 {
+func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *repository.Update, callback InstallCallback) (chan int32, error) {
+	if update == nil {
+		return nil, errors.New("no update to install given")
+	}
+	if callback == nil {
+		return nil, fmt.Errorf("no callback given")
+	}
 	outputChan := make(chan int32, 1000)
 	doneChan := make(chan bool)
 	logger := u.logger.WithField("operation", "install update async")
@@ -400,7 +407,7 @@ func (u *UpdateManager) InstallUpdateAsync(ctx context.Context, update *reposito
 		}
 	}(ctx, logger, outputChan, doneChan)
 
-	return outputChan
+	return outputChan, nil
 }
 
 func (u *UpdateManager) Progress(ctx context.Context) (int32, error) {
