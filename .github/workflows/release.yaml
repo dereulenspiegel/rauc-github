@@ -34,7 +34,7 @@ jobs:
       run: sudo systemctl restart dbus
     - name: Run testing
       run: go test -v ./...
-    - uses: anchore/sbom-action/download-syft@v0.13.3 # installs syft
+    - uses: anchore/sbom-action/download-syft@v0.13.4 # installs syft
     - uses: goreleaser/goreleaser-action@v4
       with:
         distribution: goreleaser
