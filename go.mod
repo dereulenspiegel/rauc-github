@@ -4,13 +4,13 @@ go 1.18
 
 require (
 	github.com/coreos/go-semver v0.3.1
-	github.com/go-co-op/gocron v1.18.0
+	github.com/go-co-op/gocron v1.20.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/google/go-github/v49 v49.1.0
 	github.com/holoplot/go-rauc v0.0.0-20221004094756-c380b34e34f5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 )
 
 require (
